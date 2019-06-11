@@ -57,8 +57,11 @@ class LinearClassifier(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
-
+            X_index = np.random.choice(num_train,batch_size)
+            X_batch = X[X_index, :]
+            #y_batch = np.random.choice(y, batch_size,p = None) ## wrong since x , y random choice needs the same index
+            y_batch = y[X_index]
+            
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             # evaluate loss and gradient
@@ -72,13 +75,14 @@ class LinearClassifier(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            self.W += -learning_rate * grad # W = W - step*dW # gradient descent
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             if verbose and it % 100 == 0:
                 print('iteration %d / %d: loss %f' % (it, num_iters, loss))
-
+                #pass
+            
         return loss_history
 
     def predict(self, X):
@@ -102,8 +106,9 @@ class LinearClassifier(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
-
+        test_scores =  X.dot(self.W) # (test_size, 10)
+        y_pred = np.argsort(-test_scores, axis = 1)[:,0]
+       
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return y_pred
 
@@ -122,7 +127,6 @@ class LinearClassifier(object):
         - loss as a single float
         - gradient with respect to self.W; an array of the same shape as W
         """
-        pass
 
 
 class LinearSVM(LinearClassifier):

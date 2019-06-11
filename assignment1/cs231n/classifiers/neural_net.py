@@ -79,8 +79,16 @@ class TwoLayerNet(object):
         # shape (N, C).                                                             #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
+        
+        first_layer_result = X.dot(W1) # (N,H) W*x
+        first_layer_result += b1 # W*x + b
+        
+        # check activation
+        hidden_layer = np.maximum(0, first_layer_result) # note, ReLU activation
+        
+        second_layer_result = hidden_layer.dot(W2) # (N,C)
+        second_layer_result += b2
+        scores = second_layer_result
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -97,9 +105,14 @@ class TwoLayerNet(object):
         # classifier loss.                                                          #
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
-
+        ## Compute softmax loss
+        scores-=np.max(scores,axis=1).reshape(N,-1) # numerical stability
+        exp_scores = np.exp(scores) #exponential form
+        norm_scores = np.divide(exp_scores,np.sum(exp_scores,axis=1).reshape(N,-1))
+        loss = np.sum(-np.log(norm_scores[list(range(N)),y]))
+        loss /=N
+        loss += reg*np.sum(W1*W1)
+        loss += reg*np.sum(W2*W2)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         # Backward pass: compute gradients
@@ -111,8 +124,24 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
-
+        # dscore = pk-1(k=yi)
+        dscores = norm_scores # (N,C)
+        dscores[list(range(N)),y] -= 1
+        dscores /= N
+        
+        dW2 = (hidden_layer.T).dot(dscores) # (H,C)
+        dW2 += 2*reg*W2
+        db2 = np.sum(dscores,axis=0)
+        dhidden = np.dot(dscores, W2.T) # (N,H)
+        dhidden[hidden_layer <= 0] = 0 # relu
+        dW1 = (X.T).dot(dhidden) # (D,H)
+        dW1 += 2*reg*W1
+        db1 = np.sum(dhidden,axis=0)
+        
+        grads['W1'] = dW1
+        grads['b1'] = db1
+        grads['W2'] = dW2
+        grads['b2'] = db2
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         return loss, grads
@@ -156,8 +185,9 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
-
+            random_index = np.random.choice(list(range(num_train)),batch_size)
+            X_batch = X[random_index]
+            y_batch = y[random_index]
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
             # Compute loss and gradients using the current minibatch
@@ -171,8 +201,10 @@ class TwoLayerNet(object):
             # stored in the grads dictionary defined above.                         #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-            pass
+            self.params['W1'] = self.params['W1'] - learning_rate * grads['W1']
+            self.params['b1'] = self.params['b1'] - learning_rate * grads['b1']
+            self.params['W2'] = self.params['W2'] - learning_rate * grads['W2']
+            self.params['b2'] = self.params['b2'] - learning_rate * grads['b2']
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -217,9 +249,14 @@ class TwoLayerNet(object):
         # TODO: Implement this function; it should be VERY simple!                #
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        pass
-
+        # Unpack variables from the params dictionary
+        W1, b1 = self.params['W1'], self.params['b1']
+        W2, b2 = self.params['W2'], self.params['b2']
+        N, D = X.shape
+        
+        scores = self.loss(X)
+        y_pred = np.argsort(-scores)[:,0]
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         return y_pred
